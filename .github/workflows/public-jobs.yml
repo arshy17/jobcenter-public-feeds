@@ -1,0 +1,35 @@
+name: Refresh public job listings
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: public-job-catalogue
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch permitted public APIs
+        run: node scripts/sync-public-feeds.mjs
+      - name: Publish catalogue
+        run: |
+          git add data/public-jobs.json
+          if ! git diff --cached --quiet; then
+            git config user.name 'JobCenter feed sync'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Refresh attributed public job catalogue [skip ci]'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Warm live catalogue
+        run: curl --fail --retry 3 --max-time 60 https://jobcenter.in/api/catalogue
