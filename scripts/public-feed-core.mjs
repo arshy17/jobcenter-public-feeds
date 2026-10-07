@@ -4,10 +4,10 @@ import { plainText } from './worker-core.mjs';
 export const feedPolicies = {
   jobicy: { name: 'Jobicy', home: 'https://jobicy.com', terms: 'https://github.com/Jobicy/remote-jobs-api', host: 'jobicy.com' },
   remotive: { name: 'Remotive', home: 'https://remotive.com', terms: 'https://github.com/remotive-com/remote-jobs-api', host: 'remotive.com' },
-  arbeitnow: { name: 'Arbeitnow', home: 'https://www.arbeitnow.com', terms: 'https://www.arbeitnow.com/terms', host: 'www.arbeitnow.com' },
+  arbeitnow: { name: 'Arbeitnow', home: 'https://www.arbeitnow.com', terms: 'https://www.arbeitnow.com/terms', host: 'www.arbeitnow.com', regionalHosts: ['www.arbeitnow.co.uk', 'www.arbeitnow.fr', 'www.arbeitnow.ch'] },
 };
 export function sourceUrl(value, provider) {
-  try { const u = new URL(value); return u.protocol === 'https:' && u.hostname === feedPolicies[provider]?.host && !u.username && !u.password && !u.port ? u.href : null; } catch { return null; }
+  try { const u = new URL(value); const policy=feedPolicies[provider]; return u.protocol === 'https:' && [policy?.host,...(policy?.regionalHosts??[])].includes(u.hostname) && !u.username && !u.password && !u.port ? u.href : null; } catch { return null; }
 }
 const text = (v, max) => typeof v === 'string' ? plainText(v).slice(0, max) : '';
 export function normalizePublicJob(raw, provider, checkedAt) {
